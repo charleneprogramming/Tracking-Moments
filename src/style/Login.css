@@ -1,0 +1,86 @@
+.cover {
+    background-color: #708A58;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
+*{ 
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+.title{
+    color:white;
+    text-align: center;
+    font-size: 30px;
+    font-weight:bold;
+}
+
+hr{
+    border-top:5px solid white;
+    width:50vh;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.border{
+    margin-top: 20vh;
+    display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.border-title{
+    height:50vh;
+    width:70vh;
+    background-color: white;
+    border-radius: 15px;
+}
+
+.login{
+    text-align: center;
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 25px;
+}
+
+.input-info form{
+    align-items: center;
+}
+
+.input-info{
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.input-info input{
+    margin-left: 20px;
+    width:50vh;
+    height: 5vh;
+    border: 2px solid rgb(61, 56, 56);
+    font-size: 15px;
+    padding-left: 10px;
+}
+
+.submit{
+    text-align: center;
+}
+
+.submit button{
+    cursor: pointer;
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 27px;
+    border: none;
+    border-radius: 12px;
+    padding: 0px 15px;
+    background-color: #708A58;
+    color:white;
+    margin: 13px;
+}
+
+.submit a{
+    color: rgb(99, 88, 88);
+    font-style: italic;
+    font-size: 18px;
+}

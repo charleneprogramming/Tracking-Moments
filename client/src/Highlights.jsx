@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
 import Navbar from './components/Navbar';
@@ -13,34 +14,67 @@ function Highlights() {
     const [showModal, setShowModal] = useState(false);
     const navigate = useNavigate();
 
-    // Load highlighted notes from localStorage
+    // Load favorited notes from the server
     useEffect(() => {
-        const loadHighlights = () => {
+        const loadFavorites = async () => {
             try {
-                const saved = localStorage.getItem('highlightedNotes');
-                const highlights = saved ? JSON.parse(saved) : [];
-                setHighlightedNotes(highlights);
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    navigate('/login');
+                    return;
+                }
+
+                const response = await fetch('http://localhost:5000/api/favorites', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch favorites');
+                }
+
+                const favorites = await response.json();
+                setHighlightedNotes(favorites);
             } catch (error) {
-                console.error('Error loading highlights:', error);
+                console.error('Error loading favorites:', error);
+                toast.error(error.message || 'Failed to load favorites');
             } finally {
                 setLoading(false);
             }
         };
 
-        loadHighlights();
-        // Listen for storage events to sync across tabs
-        window.addEventListener('storage', loadHighlights);
-        return () => window.removeEventListener('storage', loadHighlights);
-    }, []);
+        loadFavorites();
+    }, [navigate]);
 
-    const removeFromHighlights = (e, id) => {
+    const removeFromHighlights = async (e, id) => {
         e.stopPropagation();
-        const updatedHighlights = highlightedNotes.filter(note => note.id !== id);
-        localStorage.setItem('highlightedNotes', JSON.stringify(updatedHighlights));
-        setHighlightedNotes(updatedHighlights);
         
-        // Trigger storage event to sync across tabs
-        window.dispatchEvent(new Event('storage'));
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error('Please log in to manage favorites');
+                navigate('/login');
+                return;
+            }
+
+            const response = await fetch(`http://localhost:5000/api/favorites/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to remove from favorites');
+            }
+
+            setHighlightedNotes(prev => prev.filter(note => note.id !== id));
+            toast.success('Removed from favorites');
+        } catch (error) {
+            console.error('Error removing favorite:', error);
+            toast.error(error.message || 'Failed to remove from favorites');
+        }
     };
 
     const handleCardClick = (note) => {

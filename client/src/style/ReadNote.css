@@ -89,6 +89,35 @@
   box-shadow: 0 0 0 3px rgba(112, 138, 88, 0.2);
 }
 
+/* Disabled states */
+.search-filter-container.disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.search-input.disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  border-color: #e0e0e0;
+  color: #999;
+}
+
+.search-icon.disabled,
+.calendar-icon.disabled {
+  color: #ccc;
+}
+
+/* Date picker disabled state */
+.react-datepicker-wrapper.disabled .react-datepicker__input-container input {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #999;
+}
+
+.react-datepicker-wrapper.disabled .react-datepicker__input-container input::placeholder {
+  color: #ccc;
+}
+
 .date-picker-container {
   position: relative;
   width: 100%;

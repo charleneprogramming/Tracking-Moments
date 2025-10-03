@@ -7,6 +7,7 @@ import cors from "cors";
 import path from "path";
 import authRoutes from "./routes/auth.js";
 import postsRoutes from "./routes/posts.js";
+import favoritesRoutes from "./routes/favorites.js";
 // 1️⃣ Load environment variables
 dotenv.config();
 
@@ -36,7 +37,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // 4️⃣ Mount routes
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postsRoutes);
-
+app.use("/api/favorites", favoritesRoutes);
 // 5️⃣ DB connection
 const db = mysql.createConnection({
     host: process.env.DB_HOST || "localhost",

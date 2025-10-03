@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import Navbar from './components/Navbar';
 import './style/ReadNote.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit, faSearch, faCalendarAlt, faTimes, faHeart as solidHeart, faHeart as regularHeart  } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEdit, faSearch, faCalendarAlt, faTimes, faHeart as solidHeart, faHeart as regularHeart } from '@fortawesome/free-solid-svg-icons';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -20,72 +20,112 @@ function ReadNote() {
     });
     const location = useLocation();
 
-    // Fetch notes when component mounts and when navigating from AddNote
+    // Fetch notes and favorites when component mounts and when navigating
     useEffect(() => {
-        const fetchNotes = async () => {
+        const fetchData = async () => {
             try {
+                setLoading(true);
                 // Get logged-in user from localStorage
                 const storedUser = localStorage.getItem("user");
-                if (!storedUser) {
+                const token = localStorage.getItem("token");
+
+                if (!storedUser || !token) {
                     console.error("⚠️ No logged-in user found in localStorage");
                     setLoading(false);
                     return;
                 }
 
                 const user = JSON.parse(storedUser);
-                const response = await fetch(`http://localhost:5000/api/posts/user/${user.id}`, {
+
+                // Fetch user's notes
+                const notesResponse = await fetch(`http://localhost:5000/api/posts/user/${user.id}`, {
                     method: 'GET',
                     headers: {
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
 
-                if (!response.ok) {
+                if (!notesResponse.ok) {
                     throw new Error('Failed to fetch notes');
                 }
 
-                const data = await response.json();
-                setNotes(data);
+                const notesData = await notesResponse.json();
+                setNotes(notesData);
+
+                // Fetch user's favorites
+                const favoritesResponse = await fetch('http://localhost:5000/api/favorites', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (favoritesResponse.ok) {
+                    const favoritesData = await favoritesResponse.json();
+                    setHighlights(favoritesData);
+                }
             } catch (error) {
-                console.error('Error fetching notes:', error);
-                toast.error('Failed to load notes');
+                console.error('Error fetching data:', error);
+                toast.error(error.message || 'Failed to load data');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchNotes();
+        fetchData();
     }, [location.key]); // Add location.key as dependency to trigger on navigation
 
-    // Toggle highlight status of a note
+    // Toggle favorite status of a note
     const toggleHighlight = async (e, id) => {
         e.stopPropagation();
-        const noteToHighlight = notes.find(note => note.id === id);
-        if (!noteToHighlight) return;
+        const noteToFavorite = notes.find(note => note.id === id);
+        if (!noteToFavorite) return;
 
-        const isHighlighted = highlights.some(note => note.id === id);
-        let updatedHighlights;
+        // Get current user
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
 
-        if (isHighlighted) {
-            updatedHighlights = highlights.filter(note => note.id !== id);
-        } else {
-            updatedHighlights = [...highlights, { ...noteToHighlight, isHighlighted: true }];
+        if (!user || !user.id || !token) {
+            toast.error('Please log in to add to favorites');
+            return;
         }
 
+        const isFavorited = highlights.some(note => note.id === id);
+
         try {
-            // Save to local storage
-            localStorage.setItem('highlightedNotes', JSON.stringify(updatedHighlights));
-            setHighlights(updatedHighlights);
-            
-            // Show appropriate toast message
-            if (!isHighlighted) {
-                toast.success('Added to Highlights!');
+            if (isFavorited) {
+                // Remove from favorites
+                const response = await fetch(`http://localhost:5000/api/favorites/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to remove from favorites');
+
+                setHighlights(prev => prev.filter(note => note.id !== id));
+                toast.info('Removed from favorites');
             } else {
-                toast.info('Removed from Highlights');
+                // Add to favorites
+                const response = await fetch(`http://localhost:5000/api/favorites/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to add to favorites');
+
+                setHighlights(prev => [...prev, { ...noteToFavorite }]);
+                toast.success('Added to favorites!');
             }
         } catch (error) {
-            console.error('Error updating highlights:', error);
-            toast.error('Failed to update highlights');
+            console.error('Error updating favorites:', error);
+            toast.error(error.message || 'Failed to update favorites');
         }
     };
 
@@ -98,24 +138,24 @@ function ReadNote() {
                     navigate('/login');
                     return;
                 }
-    
+
                 const noteId = parseInt(id, 10);
-    
+
                 // Use the correct endpoint for archiving
                 const response = await fetch(`http://localhost:5000/api/posts/${noteId}`, {
                     method: 'PATCH',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ is_archived: true })
                 });
-    
+
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
                     throw new Error(errorData.error || 'Failed to move note to archive');
                 }
-    
+
                 // Remove the archived note from UI
                 setNotes(prevNotes => prevNotes.filter(note => parseInt(note.id, 10) !== noteId));
                 toast.success('Note moved to archive successfully!');
@@ -130,7 +170,7 @@ function ReadNote() {
             }
         }
     };
-    
+
 
     const handleEdit = (id) => {
         navigate(`/EditNote/${id}`);
@@ -224,27 +264,35 @@ function ReadNote() {
                 <h1>Your Journey</h1>
 
                 {/* Search and Filter Section */}
-                <div className="search-filter-container">
+                <div className={`search-filter-container ${notes.length === 0 ? 'disabled' : ''}`}>
                     <div className="search-box">
-                        <FontAwesomeIcon icon={faSearch} className="search-icon" />
+                        <FontAwesomeIcon
+                            icon={faSearch}
+                            className={`search-icon ${notes.length === 0 ? 'disabled' : ''}`}
+                        />
                         <input
                             type="text"
-                            placeholder="Search notes..."
+                            placeholder={notes.length === 0 ? "Add a note to enable search" : "Search notes..."}
                             value={searchTerm}
                             onChange={handleSearchChange}
-                            className="search-input"
+                            className={`search-input ${notes.length === 0 ? 'disabled' : ''}`}
+                            disabled={notes.length === 0}
                         />
                     </div>
 
                     <div className="date-picker-container">
-                        <FontAwesomeIcon icon={faCalendarAlt} className="calendar-icon" />
+                        <FontAwesomeIcon
+                            icon={faCalendarAlt}
+                            className={`calendar-icon ${notes.length === 0 ? 'disabled' : ''}`}
+                        />
                         <DatePicker
                             selected={selectedDate}
                             onChange={handleDateChange}
-                            placeholderText="Filter by date"
-                            className="date-picker"
+                            placeholderText={notes.length === 0 ? "No notes to filter" : "Filter by date"}
+                            className={`date-picker ${notes.length === 0 ? 'disabled' : ''}`}
                             dateFormat="yyyy-MM-dd"
                             isClearable
+                            disabled={notes.length === 0}
                         />
                     </div>
 
@@ -287,16 +335,16 @@ function ReadNote() {
 
                                 const hasImage = !!note.image_url;
                                 return (
-                                    <div 
-                                        key={note.id} 
+                                    <div
+                                        key={note.id}
                                         className={`note-card ${hasImage ? 'has-image' : ''}`}
                                         onClick={() => openModal(note)}
                                     >
                                         {hasImage && (
                                             <div className="note-image-container">
-                                                <img 
-                                                    src={note.image_url.startsWith('http') ? 
-                                                        note.image_url : 
+                                                <img
+                                                    src={note.image_url.startsWith('http') ?
+                                                        note.image_url :
                                                         `http://localhost:5000${note.image_url}`}
                                                     alt={note.title}
                                                 />
@@ -316,18 +364,18 @@ function ReadNote() {
                                             </p>
                                         </div>
                                         <div className="note-actions">
-                                            <button 
+                                            <button
                                                 className={`action-btn ${highlights.some(h => h.id === note.id) ? 'highlighted' : ''}`}
                                                 onClick={(e) => toggleHighlight(e, note.id)}
                                                 title={highlights.some(h => h.id === note.id) ? 'Remove from Highlights' : 'Add to Highlights'}
                                             >
-                                                <FontAwesomeIcon 
-                                                    icon={highlights.some(h => h.id === note.id) ? solidHeart : regularHeart} 
+                                                <FontAwesomeIcon
+                                                    icon={highlights.some(h => h.id === note.id) ? solidHeart : regularHeart}
                                                     className={highlights.some(h => h.id === note.id) ? 'highlight-icon active' : 'highlight-icon'}
                                                 />
                                             </button>
-                                            <button 
-                                                className="action-btn edit-btn" 
+                                            <button
+                                                className="action-btn edit-btn"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleEdit(note.id);
@@ -335,7 +383,7 @@ function ReadNote() {
                                             >
                                                 <FontAwesomeIcon icon={faEdit} />
                                             </button>
-                                            <button 
+                                            <button
                                                 className="action-btn delete-btn"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -361,10 +409,10 @@ function ReadNote() {
                             </button>
                             {selectedNote.image_url && (
                                 <div className="view-modal-image">
-                                    <img 
-                                        src={selectedNote.image_url.startsWith('http') ? 
-                                            selectedNote.image_url : 
-                                            `http://localhost:5000${selectedNote.image_url}`} 
+                                    <img
+                                        src={selectedNote.image_url.startsWith('http') ?
+                                            selectedNote.image_url :
+                                            `http://localhost:5000${selectedNote.image_url}`}
                                         alt={selectedNote.title}
                                         onLoad={handleImageLoad}
                                         onError={(e) => {

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGear } from '@fortawesome/free-solid-svg-icons';
+import { faGear , faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -36,6 +36,11 @@ function Navbar() {
         navigate('/Login', { replace: true });
       }
     });
+  };
+
+  const handleArchive = (e) => {
+    e.preventDefault();
+    navigate('/Archive', { replace: true });
   };
 
   const styles = {
@@ -99,6 +104,7 @@ function Navbar() {
           </a>
         </li>
 
+
         <li
           style={styles.dropdown}
           onMouseEnter={showDropdown}
@@ -124,12 +130,36 @@ function Navbar() {
                   alignItems: 'center',
                   gap: '0.5rem'
                 }}
+                onClick={handleArchive}
+              >
+                <FontAwesomeIcon icon={faTrash} />
+                <span>Archive</span>
+              </button>
+            </li>
+            <li style={styles.dropdownMenuItem}>
+              <button
+                style={{
+                  ...styles.dropdownMenuLink,
+                  background: 'none',
+                  border: 'none',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '0.5rem 1rem',
+                  font: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
                 onClick={handleLogout}
               >
                 <FontAwesomeIcon icon={faRightFromBracket} />
                 <span>Log Out</span>
               </button>
             </li>
+            
+            
           </ul>
         </li>
       </ul>

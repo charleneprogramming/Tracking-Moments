@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Navbar from './components/Navbar';
 import './style/ReadNote.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit, faSearch, faCalendarAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEdit, faSearch, faCalendarAlt, faTimes, faHeart as solidHeart, faHeart as regularHeart  } from '@fortawesome/free-solid-svg-icons';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -14,6 +14,10 @@ function ReadNote() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDate, setSelectedDate] = useState(null);
+    const [highlights, setHighlights] = useState(() => {
+        const saved = localStorage.getItem('highlightedNotes');
+        return saved ? JSON.parse(saved) : [];
+    });
     const location = useLocation();
 
     // Fetch notes when component mounts and when navigating from AddNote
@@ -53,58 +57,80 @@ function ReadNote() {
         fetchNotes();
     }, [location.key]); // Add location.key as dependency to trigger on navigation
 
-    // ✅ Delete note
+    // Toggle highlight status of a note
+    const toggleHighlight = async (e, id) => {
+        e.stopPropagation();
+        const noteToHighlight = notes.find(note => note.id === id);
+        if (!noteToHighlight) return;
+
+        const isHighlighted = highlights.some(note => note.id === id);
+        let updatedHighlights;
+
+        if (isHighlighted) {
+            updatedHighlights = highlights.filter(note => note.id !== id);
+        } else {
+            updatedHighlights = [...highlights, { ...noteToHighlight, isHighlighted: true }];
+        }
+
+        try {
+            // Save to local storage
+            localStorage.setItem('highlightedNotes', JSON.stringify(updatedHighlights));
+            setHighlights(updatedHighlights);
+            
+            // Show appropriate toast message
+            if (!isHighlighted) {
+                toast.success('Added to Highlights!');
+            } else {
+                toast.info('Removed from Highlights');
+            }
+        } catch (error) {
+            console.error('Error updating highlights:', error);
+            toast.error('Failed to update highlights');
+        }
+    };
+
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+        if (window.confirm('Are you sure you want to move this note to archive? You can restore it later from the archive page.')) {
             try {
-                // Get the token from localStorage
                 const token = localStorage.getItem('token');
-                console.log('Token from localStorage:', token);
-                
                 if (!token) {
-                    console.error('No token found in localStorage');
                     toast.error('Authentication required. Please log in again.');
                     navigate('/login');
                     return;
                 }
-
-                // Make sure ID is a number
+    
                 const noteId = parseInt(id, 10);
-                console.log('Deleting note with ID:', noteId);
-
+    
+                // Use the correct endpoint for archiving
                 const response = await fetch(`http://localhost:5000/api/posts/${noteId}`, {
-                    method: 'DELETE',
+                    method: 'PATCH',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
+                        'Authorization': `Bearer ${token}`
                     },
-                    credentials: 'include',
-                    mode: 'cors'
+                    body: JSON.stringify({ is_archived: true })
                 });
-
-                const responseData = await response.json().catch(() => ({}));
-                console.log('Delete response:', response.status, responseData); // Debug log
-
+    
                 if (!response.ok) {
-                    throw new Error(responseData.error || 'Failed to delete note');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to move note to archive');
                 }
-
-                // Update UI by removing the deleted note
+    
+                // Remove the archived note from UI
                 setNotes(prevNotes => prevNotes.filter(note => parseInt(note.id, 10) !== noteId));
-                toast.success('Note deleted successfully!');
+                toast.success('Note moved to archive successfully!');
             } catch (error) {
-                console.error('Error deleting note:', error);
+                console.error('Error archiving note:', error);
                 if (error.message.includes('token') || error.message.includes('authenticate')) {
-                    // If token is invalid, clear it and redirect to login
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     navigate('/login');
                 }
-                toast.error(error.message || 'Failed to delete note. Please try again.');
+                toast.error(error.message || 'Failed to move note to archive. Please try again.');
             }
         }
     };
+    
 
     const handleEdit = (id) => {
         navigate(`/EditNote/${id}`);
@@ -133,6 +159,18 @@ function ReadNote() {
         setSelectedNote(note);
         setIsModalOpen(true);
         document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+    };
+
+    // Handle image load to determine orientation
+    const handleImageLoad = (e) => {
+        const img = e.target;
+        if (img.naturalWidth > img.naturalHeight) {
+            img.parentElement.classList.add('landscape');
+            img.parentElement.classList.remove('portrait');
+        } else {
+            img.parentElement.classList.add('portrait');
+            img.parentElement.classList.remove('landscape');
+        }
     };
 
     // Close modal
@@ -279,6 +317,16 @@ function ReadNote() {
                                         </div>
                                         <div className="note-actions">
                                             <button 
+                                                className={`action-btn ${highlights.some(h => h.id === note.id) ? 'highlighted' : ''}`}
+                                                onClick={(e) => toggleHighlight(e, note.id)}
+                                                title={highlights.some(h => h.id === note.id) ? 'Remove from Highlights' : 'Add to Highlights'}
+                                            >
+                                                <FontAwesomeIcon 
+                                                    icon={highlights.some(h => h.id === note.id) ? solidHeart : regularHeart} 
+                                                    className={highlights.some(h => h.id === note.id) ? 'highlight-icon active' : 'highlight-icon'}
+                                                />
+                                            </button>
+                                            <button 
                                                 className="action-btn edit-btn" 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -306,35 +354,45 @@ function ReadNote() {
 
                 {/* View Note Modal */}
                 {isModalOpen && selectedNote && (
-                    <div className="modal-overlay" onClick={handleBackdropClick}>
-                        <div className="modal-content">
-                            <button className="modal-close" onClick={closeModal}>
+                    <div className="view-modal-overlay" onClick={handleBackdropClick}>
+                        <div className="view-modal-content">
+                            <button className="view-modal-close" onClick={closeModal}>
                                 <FontAwesomeIcon icon={faTimes} />
                             </button>
-                            <div className="modal-header">
-                                <h2>{selectedNote.title}</h2>
-                                <p className="note-date">
-                                    {new Date(selectedNote.post_date).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                    })}
-                                </p>
-                            </div>
-                            <div className="modal-body">
-                                <p className="note-description">
-                                    {selectedNote.description}
-                                </p>
-                                {selectedNote.image_url && (
-                                    <div className="modal-image-container">
-                                        <img 
-                                            src={selectedNote.image_url.startsWith('http') ? 
-                                                selectedNote.image_url : 
-                                                `http://localhost:5000${selectedNote.image_url}`} 
-                                            alt={selectedNote.title}
-                                        />
+                            {selectedNote.image_url && (
+                                <div className="view-modal-image">
+                                    <img 
+                                        src={selectedNote.image_url.startsWith('http') ? 
+                                            selectedNote.image_url : 
+                                            `http://localhost:5000${selectedNote.image_url}`} 
+                                        alt={selectedNote.title}
+                                        onLoad={handleImageLoad}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.style.display = 'none';
+                                        }}
+                                        loading="lazy"
+                                    />
+                                </div>
+                            )}
+                            <div className="view-modal-body">
+                                <div className="view-modal-header">
+                                    <h2>{selectedNote.title || 'Untitled Note'}</h2>
+                                    <div className="view-modal-date">
+                                        <FontAwesomeIcon icon={faCalendarAlt} className="date-icon" />
+                                        <span>
+                                            {new Date(selectedNote.post_date).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                                weekday: 'long'
+                                            })}
+                                        </span>
                                     </div>
-                                )}
+                                </div>
+                                <div className="view-modal-description">
+                                    {selectedNote.description || 'No description provided.'}
+                                </div>
                             </div>
                         </div>
                     </div>

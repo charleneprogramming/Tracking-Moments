@@ -10,6 +10,7 @@ import Home from './Home';
 import Highlights from './Highlights';
 import Login from './Login';
 import Sign from './Sign';
+import Archive from './Archive';
 
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           <Route path="/EditNote/:id" element={<EditNote />} />
           <Route path="/Login" element={<Login />} />
           <Route path="/Sign" element={<Sign />} />
+          <Route path="/Archive" element={<Archive />} />
         </Routes>
       </BrowserRouter>
       <ToastContainer

@@ -1,0 +1,150 @@
+.archive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.archive-title {
+  font-size: 2rem;
+  color: #333;
+  margin: 0;
+  padding: 2rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f0f0f0;
+  border: none;
+  padding: 0.5rem 2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background: #e0e0e0;
+}
+
+.no-notes {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.notes-grid {
+  display: grid;
+  padding: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.note-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.note-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.note-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.note-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.note-content {
+  padding: 1.25rem;
+}
+
+.note-title {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.25rem;
+}
+
+.note-date {
+  color: #666;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.note-description {
+  color: #555;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.note-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.btn-restore {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+
+.btn-restore:hover {
+  background-color: #43a047;
+}
+
+.btn-danger {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-danger:hover {
+  background-color: #d32f2f;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .archive-container {
+    padding: 1rem;
+  }
+
+  .notes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .archive-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}

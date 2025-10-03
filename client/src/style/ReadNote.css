@@ -42,39 +42,45 @@
 
 /* Search and Filter Section */
 .search-filter-container {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  margin-left: 7rem;
-  align-items: center;
-  justify-content: center;
+  margin: 2rem auto;
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .search-box {
   position: relative;
-  flex: 1;
-  min-width: 250px;
-  max-width: 400px;
+  width: 100%;
+  min-width: 0;
+  /* Override any min-width that might cause overflow */
 }
 
 .search-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-light);
+  font-size: 1rem;
+  pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  padding: 0.85rem 1rem 0.85rem 3rem;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
   transition: all 0.3s ease;
   background-color: #fff;
+  box-sizing: border-box;
+  height: 50px;
 }
 
 .search-input:focus {
@@ -85,26 +91,35 @@
 
 .date-picker-container {
   position: relative;
-  min-width: 200px;
+  width: 100%;
 }
 
 .calendar-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-light);
+  font-size: 1rem;
+  pointer-events: none;
   z-index: 1;
 }
 
 .date-picker {
-  width: 40%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 3rem;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
   background-color: #fff;
   cursor: pointer;
+  height: 50px;
+  box-sizing: border-box;
+  color: var(--text-color);
+}
+
+.date-picker::placeholder {
+  color: #999;
 }
 
 .date-picker:focus {
@@ -114,46 +129,103 @@
 }
 
 .clear-filters-btn {
-  padding: 0.75rem 1.25rem;
+  padding: 0 1.5rem;
   background-color: #f0f0f0;
-  border: none;
-  border-radius: 8px;
+  border: 2px solid transparent;
+  border-radius: 10px;
   color: var(--text-color);
   font-weight: 500;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  height: 50px;
+  white-space: nowrap;
 }
 
 .clear-filters-btn:hover {
   background-color: #e0e0e0;
+  border-color: #ddd;
 }
 
+.clear-filters-btn:active {
+  transform: translateY(1px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .search-filter-container {
+    grid-template-columns: 1fr 1fr;
+    max-width: 100%;
+  }
+
+  .clear-filters-btn {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-filter-container {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0 0.5rem;
+  }
+
+  .clear-filters-btn {
+    grid-column: span 1;
+    width: 100%;
+  }
+
+  .search-input,
+  .date-picker {
+    height: 48px;
+    font-size: 0.9rem;
+  }
+}
+
+/* For very small screens */
+@media (max-width: 400px) {
+  .search-filter-container {
+    padding: 0 0.25rem;
+  }
+
+  .search-input,
+  .date-picker {
+    padding-left: 2.5rem;
+    font-size: 0.85rem;
+  }
+
+  .search-icon,
+  .calendar-icon {
+    left: 12px;
+  }
+}
+
+/* Fix for date picker popup on mobile */
+.react-datepicker {
+  font-size: 0.9rem !important;
+}
+
+.react-datepicker__month-container {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* No results message */
 .no-results {
   grid-column: 1 / -1;
   text-align: center;
   padding: 2rem;
   color: var(--text-light);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .search-filter-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .search-box,
-  .date-picker-container {
-    max-width: 100%;
-  }
-  
-  .clear-filters-btn {
-    width: 100%;
-    justify-content: center;
-  }
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  margin: 1rem 0;
+  backdrop-filter: blur(5px);
 }
 
 .notes-grid {
@@ -188,7 +260,8 @@
 
 .note-image-container {
   width: 100%;
-  height: 500px; /* Slightly increased height for better visibility */
+  height: 500px;
+  /* Slightly increased height for better visibility */
   overflow: hidden;
   background-color: #f8f9fa;
   display: flex;
@@ -204,7 +277,8 @@
   max-height: 100%;
   width: auto;
   height: auto;
-  object-fit: scale-down; /* Better handling of different image sizes */
+  object-fit: scale-down;
+  /* Better handling of different image sizes */
   object-position: center;
   border-radius: 4px;
 }
@@ -287,78 +361,193 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 1rem;
-  backdrop-filter: blur(4px);
+  padding: 1.5rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  animation: fadeIn 0.3s ease-out forwards;
+  will-change: opacity;
 }
 
 .modal-content {
-  background: white;
-  border-radius: var(--border-radius);
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  border-radius: 20px;
   width: 100%;
-  max-width: 700px;
+  max-width: 800px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  animation: modalFadeIn 0.3s ease-out;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalScaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transform-origin: center;
+  will-change: transform, opacity;
+  /* Ensure proper height calculation */
+  height: auto;
+  min-height: 0; /* Crucial for flex children to respect max-height */
 }
 
-@keyframes modalFadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .modal-close {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-light);
-  transition: color 0.2s ease;
-  z-index: 10;
-  width: 36px;
-  height: 36px;
+  top: 1.25rem;
+  right: 1.5rem;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #64748b;
+  z-index: 20;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .modal-close:hover {
-  color: var(--primary-color);
-  background: rgba(0, 0, 0, 0.1);
+  color: #e53e3e;
+  background: rgba(229, 62, 62, 0.1);
+  transform: rotate(90deg) scale(1.1);
+  border-color: rgba(229, 62, 62, 0.2);
+}
+
+.modal-close:active {
+  transform: rotate(90deg) scale(0.95);
 }
 
 .modal-header {
-  padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid #eee;
+  padding: 2rem 2.5rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 2;
 }
 
 .modal-header h2 {
   margin: 0 0 0.5rem;
-  color: var(--primary-color);
+  color: #1a202c;
   font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, var(--primary-color), #8AA67A);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
 }
 
 .modal-body {
-  padding: 1.5rem 2rem 2rem;
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 160px); /* Adjusted to account for header and padding */
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) transparent;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 0;
+  background: linear-gradient(to bottom, #ffffff, #f9fafb);
+  scroll-behavior: smooth;
+  scroll-padding: 1rem;
+  /* Ensure content can grow and scroll */
+  overflow-anchor: none;
+  -webkit-overflow-scrolling: touch;
+  /* Better text wrapping */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Custom scrollbar for WebKit browsers */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+  margin: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--primary-color), #8AA67A);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  opacity: 0.5;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
+  transform: scaleX(1.1);
+}
+
+/* Firefox scrollbar */
+@supports (scrollbar-color: auto) {
+  .modal-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) transparent;
+  }
 }
 
 .modal-body .note-description {
   font-size: 1.1rem;
-  line-height: 1.7;
-  color: var(--text-color);
-  white-space: pre-wrap;
-  margin-bottom: 1.5rem;
+  line-height: 1.8;
+  color: #2d3748;
+  white-space: pre-line;
+  margin: 0 0 2rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  width: 100%;
+  position: relative;
+  padding: 0.5rem 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+  /* Ensure content doesn't cause horizontal scroll */
+  max-width: 100%;
+  overflow-x: hidden;
+  /* Better text rendering */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.modal-body .note-description p {
+  margin: 0 0 1.5em;
+}
+
+.modal-body .note-description p:last-child {
+  margin-bottom: 0;
 }
 
 .modal-image-container {
@@ -366,12 +555,29 @@
   border-radius: var(--border-radius);
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  background: linear-gradient(145deg, #f5f7fa, #eef2f5);
+  flex-shrink: 0;
+}
+
+.modal-image-container:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
 }
 
 .modal-image-container img {
   width: 100%;
-  height: auto;
+  max-height: 50vh;
+  object-fit: contain;
+  object-position: center;
   display: block;
+  margin: 0 auto;
 }
 
 .note-date {
@@ -437,8 +643,15 @@
 
 /* Loading State */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .loading {
@@ -460,19 +673,250 @@
   .read-note-container {
     padding: 1.5rem 1rem;
   }
-  
+
   .read-note-container h1 {
     font-size: 1.8rem;
     margin-bottom: 2rem;
   }
-  
+
   .notes-grid {
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 1.25rem;
   }
-  
+
   .note-image-container {
     height: 160px;
+  }
+
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    max-height: 85vh;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    margin-bottom: 0;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Ensure proper mobile height */
+    height: auto;
+    min-height: 0;
+  }
+  
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  .modal-body {
+    padding: 1.5rem 1.25rem 2rem;
+    max-height: calc(85vh - 120px);
+    /* Ensure proper mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+  
+  .modal-header {
+    padding: 1.5rem 1.5rem 1.25rem;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .modal-body .note-description {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+}
+
+/* View-Only Modal Styles */
+.view-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1.5rem;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.view-modal-content {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s ease;
+}
+
+.view-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #6b7280;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.view-modal-close:hover {
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+.view-modal-image {
+  width: 100%;
+  max-height: 60vh;
+  overflow: hidden;
+  position: relative;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16/9;
+}
+
+.view-modal-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  max-height: 100%;
+  max-width: 100%;
+  transition: transform 0.3s ease;
+}
+
+/* For portrait images */
+.view-modal-image.portrait img {
+  max-height: 80vh;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* For landscape images */
+.view-modal-image.landscape img {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+}
+
+.view-modal-body {
+  padding: 2.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.view-modal-header {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.view-modal-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.view-modal-date {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+.view-modal-date .date-icon {
+  margin-right: 8px;
+  color: #3b82f6;
+}
+
+.view-modal-description {
+  color: #4b5563;
+  line-height: 1.8;
+  font-size: 1.05rem;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .view-modal-content {
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+  
+  .view-modal-body {
+    padding: 1.75rem 1.5rem;
+  }
+  
+  .view-modal-header h2 {
+    font-size: 1.6rem;
+  }
+  
+  .view-modal-date {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .view-modal-description {
+    font-size: 1rem;
+    line-height: 1.7;
   }
 }
 
@@ -480,15 +924,15 @@
   .notes-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .note-card {
     max-width: 100%;
   }
-  
+
   .note-content {
     padding: 1.25rem;
   }
-  
+
   .note-actions {
     padding: 0 1.25rem 1.25rem;
   }

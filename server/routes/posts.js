@@ -8,15 +8,39 @@ const router = express.Router();
 
 // Middleware to verify JWT
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Access token required" });
+  try {
+    // Log incoming headers for debugging
+    console.log('Headers:', req.headers);
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: "Invalid token" });
-    req.user = user; // { id, email }
-    next();
-  });
+    const authHeader = req.headers["authorization"] || req.headers["Authorization"];
+    console.log('Auth header:', authHeader);
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('No token found in header');
+      return res.status(401).json({ message: "Access token required" });
+    }
+
+    const token = authHeader.split(' ')[1];
+    console.log('Extracted token:', token ? 'Token exists' : 'No token');
+
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not set');
+      return res.status(500).json({ message: "Server configuration error" });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        console.error('JWT verification error:', err);
+        return res.status(403).json({ message: "Invalid or expired token" });
+      }
+      console.log('Decoded user:', user);
+      req.user = user; // { id, email }
+      next();
+    });
+  } catch (error) {
+    console.error('Error in authenticateToken:', error);
+    res.status(500).json({ message: "Authentication error" });
+  }
 }
 
 // Setup file upload (optional)
@@ -67,25 +91,34 @@ router.post("/", upload.single("image"), async (req, res) => {
 // ----------------------
 // Get posts for a specific user
 // ----------------------
+// Get active posts for a specific user (excludes archived posts by default)
 router.get("/user/:userId", async (req, res) => {
   const { userId } = req.params;
+  const { showArchived } = req.query; // Optional query parameter to show archived posts
+
   try {
     const db = await mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: "",
-      database: "user_trackingmoments",
+      host: process.env.DB_HOST || "localhost",
+      user: process.env.DB_USER || "root",
+      ...(process.env.DB_PASS && { password: process.env.DB_PASS }),
+      database: process.env.DB_NAME || "user_trackingmoments"
     });
 
-    const [rows] = await db.execute(
-      "SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC",
-      [userId]
-    );
+    let query = "SELECT * FROM posts WHERE user_id = ?";
+    const params = [userId];
 
-    res.json(rows);
+    // Only include the is_archived condition if showArchived is not true
+    if (showArchived !== 'true') {
+      query += " AND (is_archived IS NULL OR is_archived = 0)";
+    }
+
+    query += " ORDER BY post_date DESC";
+
+    const [posts] = await db.execute(query, params);
+    res.json(posts);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to fetch user posts" });
+    res.status(500).json({ error: "Failed to fetch posts" });
   }
 });
 
@@ -164,12 +197,10 @@ router.put("/:id", upload.single("image"), async (req, res) => {
   }
 });
 
-// ----------------------
-// Delete post by ID (only owner can delete)
-// ----------------------
+// DELETE /api/posts/:id → permanently delete a note
 router.delete("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const userId = req.user.id; // from JWT
+  const userId = req.user.id;
 
   try {
     const db = await mysql.createConnection({
@@ -179,26 +210,137 @@ router.delete("/:id", authenticateToken, async (req, res) => {
       database: "user_trackingmoments",
     });
 
-    // Check if post exists and belongs to the user
     const [rows] = await db.execute("SELECT * FROM posts WHERE id = ?", [id]);
-
     if (rows.length === 0) {
       return res.status(404).json({ error: "Post not found" });
     }
 
     const post = rows[0];
-    if (post.user_id !== userId) {
+    console.log("Delete attempt → post.user_id:", post.user_id, "token.userId:", userId);
+
+    if (parseInt(post.user_id) !== parseInt(userId)) {
       return res.status(403).json({ error: "You are not allowed to delete this post" });
     }
 
-    // Delete the post
     await db.execute("DELETE FROM posts WHERE id = ? AND user_id = ?", [id, userId]);
-
-    res.json({ message: "Post deleted successfully!" });
-  } catch (error) {
-    console.error(error);
+    res.json({ message: "Post permanently deleted" });
+  } catch (err) {
+    console.error("Delete error:", err);
     res.status(500).json({ error: "Failed to delete post" });
   }
 });
+
+
+// PATCH /api/posts/:id  → archive a post
+router.patch("/:id", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const { is_archived } = req.body;
+
+  try {
+    const db = await mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "user_trackingmoments",
+    });
+
+    // check ownership
+    const [rows] = await db.execute("SELECT * FROM posts WHERE id = ?", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const post = rows[0];
+    if (parseInt(post.user_id) !== parseInt(userId)) {
+      return res.status(403).json({ error: "You are not allowed to archive this post" });
+    }
+
+    // update archive flag
+    await db.execute("UPDATE posts SET is_archived = ? WHERE id = ? AND user_id = ?", [
+      is_archived,
+      id,
+      userId,
+    ]);
+
+    res.json({ message: "Post archived successfully!" });
+  } catch (err) {
+    console.error("Archive error:", err);
+    res.status(500).json({ error: "Failed to archive post" });
+  }
+});
+
+
+// ----------------------
+// Get archived posts for a specific user
+// ----------------------
+router.get("/user/:userId/archived", authenticateToken, async (req, res) => {
+  const { userId } = req.params;
+
+  // Verify that the authenticated user is requesting their own data
+  if (parseInt(userId) !== parseInt(req.user.id)) {
+    return res.status(403).json({ error: "You are not authorized to view these posts" });
+  }
+
+  try {
+    const db = await mysql.createConnection({
+      host: process.env.DB_HOST || "localhost",
+      user: process.env.DB_USER || "root",
+      ...(process.env.DB_PASS && { password: process.env.DB_PASS }),
+      database: process.env.DB_NAME || "user_trackingmoments"
+    });
+
+    const [posts] = await db.execute(
+      "SELECT * FROM posts WHERE user_id = ? AND is_archived = TRUE ORDER BY post_date DESC",
+      [userId]
+    );
+
+    res.json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch archived posts" });
+  }
+});
+
+// ----------------------
+// Restore an archived post
+// ----------------------
+router.patch("/:id/restore", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id; // from JWT
+
+  try {
+    const db = await mysql.createConnection({
+      host: process.env.DB_HOST || "localhost",
+      user: process.env.DB_USER || "root",
+      ...(process.env.DB_PASS && { password: process.env.DB_PASS }),
+      database: process.env.DB_NAME || "user_trackingmoments"
+    });
+
+    // Check if post exists, is archived, and belongs to the user
+    const [rows] = await db.execute(
+      "SELECT * FROM posts WHERE id = ? AND user_id = ? AND is_archived = TRUE",
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Archived post not found or you don't have permission" });
+    }
+
+    // Restore the post by setting is_archived to FALSE
+    await db.execute(
+      "UPDATE posts SET is_archived = FALSE WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
+
+    res.json({ message: "Post restored successfully!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to restore post" });
+  }
+});
+
+// ----------------------
+// Permanently delete a post (for admin/archive cleanup)
 
 export default router;
